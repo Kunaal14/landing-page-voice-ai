@@ -1,0 +1,7 @@
+{
+  "name": "NovaVoice AI - Landing Page",
+  "description": "A minimalist, high-end landing page for a Voice AI company featuring a real-time conversational AI agent that helps businesses book appointments.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
