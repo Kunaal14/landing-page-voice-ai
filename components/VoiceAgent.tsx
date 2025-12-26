@@ -12,6 +12,7 @@ import StatusHeader from './voice/StatusHeader';
 import Controls from './voice/Controls';
 
 const TRANSCRIPT_WEBHOOK_URL = "https://kunaal-n8n-app.proudsmoke-84fb7068.northeurope.azurecontainerapps.io/webhook/landing-page";
+const CALENDAR_AVAILABILITY_URL = "https://kunaal-n8n-app.proudsmoke-84fb7068.northeurope.azurecontainerapps.io/webhook/calendar-availability"; // Update with your actual endpoint
 const MAX_CALL_DURATION = 300; 
 const SILENCE_TIMEOUT_MS = 15000; // Exact 15s
 const MIN_RMS_THRESHOLD = 0.003; // More sensitive floor
@@ -31,7 +32,9 @@ You are 'Sara', the lead Voice AI specialist at Tigest.
 ## CONVERSATION FLOW:
 1. Greet the user, ask for their name and business type.
 2. Answer questions about AI lead capture.
-3. Attempt to get an email for a follow-up.
+3. If the user asks about scheduling, availability, or booking, use the 'get_calendar_availability' tool to fetch available time slots.
+4. Present the available slots to the user in a natural, conversational way.
+5. Attempt to get an email for a follow-up.
 `;
 
 const tools: { functionDeclarations: FunctionDeclaration[] }[] = [{
@@ -47,6 +50,24 @@ const tools: { functionDeclarations: FunctionDeclaration[] }[] = [{
           business_nature: { type: Type.STRING }
         },
         required: ['name', 'email']
+      }
+    },
+    {
+      name: 'get_calendar_availability',
+      description: 'Fetches available time slots from the calendar. Use this when the user asks about availability, scheduling, or what times are open. Returns a list of available time slots that can be used for booking.',
+      parameters: {
+        type: Type.OBJECT,
+        properties: {
+          date: { 
+            type: Type.STRING,
+            description: 'Optional date in YYYY-MM-DD format. If not provided, defaults to today and next few days.'
+          },
+          duration_minutes: {
+            type: Type.NUMBER,
+            description: 'Optional duration in minutes for the appointment. Defaults to 30 if not specified.'
+          }
+        },
+        required: []
       }
     },
     {
@@ -291,7 +312,64 @@ const VoiceAgent: React.FC = () => {
                 if (fc.name === 'terminate_call') {
                   pendingTerminationRef.current = true;
                   session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { status: "hanging_up" } } });
-                } else {
+                } else if (fc.name === 'get_calendar_availability') {
+                  // Handle calendar availability tool call
+                  setActiveTool(fc.name);
+                  try {
+                    // Make POST request to get calendar availability
+                    const response = await fetch(CALENDAR_AVAILABILITY_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        date: fc.args.date || null,
+                        duration_minutes: fc.args.duration_minutes || 30,
+                        session_id: `tigest_demo_${Date.now()}`
+                      }),
+                    });
+                    
+                    if (response.ok) {
+                      const availabilityData = await response.json();
+                      // Send the availability data back to the AI so it can continue the conversation
+                      session.sendToolResponse({ 
+                        functionResponses: { 
+                          id: fc.id, 
+                          name: fc.name, 
+                          response: {
+                            success: true,
+                            available_slots: availabilityData.available_slots || [],
+                            message: availabilityData.message || "Here are the available time slots."
+                          }
+                        } 
+                      });
+                    } else {
+                      // Handle error case
+                      session.sendToolResponse({ 
+                        functionResponses: { 
+                          id: fc.id, 
+                          name: fc.name, 
+                          response: {
+                            success: false,
+                            error: "Unable to fetch calendar availability at this time. Please try again later."
+                          }
+                        } 
+                      });
+                    }
+                  } catch (error) {
+                    console.error("Calendar availability fetch failed:", error);
+                    session.sendToolResponse({ 
+                      functionResponses: { 
+                        id: fc.id, 
+                        name: fc.name, 
+                        response: {
+                          success: false,
+                          error: "There was an error checking calendar availability."
+                        }
+                      } 
+                    });
+                  }
+                  setTimeout(() => setActiveTool(null), 2000);
+                } else if (fc.name === 'capture_lead_info') {
+                  // Handle lead capture
                   setActiveTool(fc.name);
                   leadDataRef.current = { ...leadDataRef.current, ...fc.args };
                   session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { success: true } } });

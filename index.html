@@ -46,35 +46,96 @@
     /* ZERO-LATENCY RANGE SLIDER */
     input[type=range] {
       -webkit-appearance: none;
+      appearance: none;
       width: 100%;
       background: transparent;
-      cursor: pointer;
-      touch-action: none; /* Prevents page scroll interference during sliding */
+      cursor: grab;
+      touch-action: pan-x;
       height: 24px;
       margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    /* Ensure ROI calculator sliders work - override any conflicting styles */
+    #roi-calculator input[type=range] {
+      position: relative;
+      z-index: 1;
+    }
+    
+    #roi-calculator input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: grab;
+      margin-top: -8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8);
+      border: none;
+      transition: none;
+      pointer-events: auto;
+    }
+    
+    #roi-calculator input[type=range]::-moz-range-thumb {
+      -moz-appearance: none;
+      appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: grab;
+      border: 1px solid transparent;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8);
+      transition: none;
+      pointer-events: auto;
+    }
+    
+    #roi-calculator input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      border-radius: 2px;
+    }
+    
+    #roi-calculator input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      border-radius: 2px;
+    }
+    
+    input[type=range]:active {
+      cursor: grabbing;
     }
 
     input[type=range]:focus {
       outline: none;
     }
 
-    /* Track Styles */
-    input[type=range]::-webkit-slider-runnable-track {
+    /* Track Styles - Using CSS custom property for smooth gradient updates */
+    input[type=range].slider-track::-webkit-slider-runnable-track {
       width: 100%;
       height: 4px;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.1);
+      background: linear-gradient(to right, #6366f1 0%, #6366f1 var(--slider-percentage, 0%), rgba(255,255,255,0.1) var(--slider-percentage, 0%), rgba(255,255,255,0.1) 100%);
       border-radius: 2px;
       border: none;
+      transition: none; /* Prevent any transitions for instant updates */
+      pointer-events: none; /* Allow thumb to handle pointer events */
     }
 
-    input[type=range]::-moz-range-track {
+    input[type=range].slider-track::-moz-range-track {
       width: 100%;
       height: 4px;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.1);
+      background: linear-gradient(to right, #6366f1 0%, #6366f1 var(--slider-percentage, 0%), rgba(255,255,255,0.1) var(--slider-percentage, 0%), rgba(255,255,255,0.1) 100%);
       border-radius: 2px;
       border: none;
+      transition: none;
+      pointer-events: none; /* Allow thumb to handle pointer events */
     }
 
     /* Thumb Styles - Optimized for instant visual feedback */
@@ -83,12 +144,15 @@
       width: 20px;
       border-radius: 50%;
       background: #ffffff;
-      cursor: pointer;
+      cursor: grab;
       -webkit-appearance: none;
+      appearance: none; /* CRITICAL: Missing property */
       margin-top: -8px; /* Centers thumb on 4px track */
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8);
       border: none;
       transition: none; /* Crucial for zero-lag feeling */
+      will-change: transform; /* Optimize for smooth movement */
+      pointer-events: auto; /* Thumb handles all pointer events */
     }
 
     input[type=range]::-moz-range-thumb {
@@ -96,10 +160,50 @@
       width: 20px;
       border-radius: 50%;
       background: #ffffff;
-      cursor: pointer;
-      border: none;
+      cursor: grab;
+      -moz-appearance: none;
+      appearance: none; /* CRITICAL: Missing property */
+      border: 1px solid transparent; /* CRITICAL: Might be needed */
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8);
       transition: none;
+      will-change: transform;
+      pointer-events: auto; /* Thumb handles all pointer events */
+    }
+    
+    /* Diagnostic slider test styles */
+    input[type=range].diagnostic-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 24px;
+      margin: 0;
+      padding: 0;
+    }
+    
+    input[type=range].diagnostic-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: white;
+      cursor: grab;
+      border: none;
+    }
+    
+    input[type=range].diagnostic-slider::-moz-range-thumb {
+      -moz-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: white;
+      cursor: grab;
+      border: none;
+    }
+    
+    /* Optimize the slider input element itself */
+    input[type=range].slider-track {
+      will-change: contents;
+      -webkit-font-smoothing: antialiased;
     }
 
     input[type=range]:active::-webkit-slider-thumb {
@@ -111,19 +215,54 @@
       background: #6366f1;
       transform: scale(1.1);
     }
+    
+    /* Radix UI Slider Styles */
+    [data-radix-slider-root] {
+      position: relative;
+      display: flex;
+      align-items: center;
+      user-select: none;
+      touch-action: none;
+      width: 100%;
+      height: 24px;
+    }
+    
+    [data-radix-slider-track] {
+      position: relative;
+      flex-grow: 1;
+      border-radius: 2px;
+      height: 4px;
+    }
+    
+    [data-radix-slider-range] {
+      position: absolute;
+      height: 100%;
+      border-radius: 2px;
+    }
+    
+    [data-radix-slider-thumb] {
+      display: block;
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8);
+      cursor: grab;
+      transition: none;
+    }
+    
+    [data-radix-slider-thumb]:active {
+      cursor: grabbing;
+    }
+    
+    [data-radix-slider-thumb]:focus {
+      outline: none;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.8), 0 0 0 4px rgba(99, 102, 241, 0.3);
+    }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
-  }
-}
-</script>
 </head>
 <body>
   <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

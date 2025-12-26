@@ -386,14 +386,6 @@ const App: React.FC = () => {
             
             <div className="flex flex-wrap items-center gap-16">
                 <div className="space-y-6">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Navigation</h4>
-                    <ul className="flex items-center space-x-8 text-sm text-white/40">
-                        <li><button onClick={() => document.getElementById('solutions')?.scrollIntoView({behavior:'smooth'})} className="hover:text-white transition-colors">Solutions</button></li>
-                        <li><button onClick={() => document.getElementById('results')?.scrollIntoView({behavior:'smooth'})} className="hover:text-white transition-colors">Results</button></li>
-                        <li><button onClick={() => document.getElementById('clients')?.scrollIntoView({behavior:'smooth'})} className="hover:text-white transition-colors">Clients</button></li>
-                    </ul>
-                </div>
-                <div className="space-y-6">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Social Connect</h4>
                     <ul className="flex items-center space-x-8 text-sm text-white/40">
                         <li><a href="https://www.linkedin.com/company/tigestclub/" className="hover:text-white transition-colors">LinkedIn</a></li>

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 
 const ROICalculator: React.FC = () => {
   // --- Financial Parameters ---
@@ -54,34 +54,42 @@ const ROICalculator: React.FC = () => {
     };
   }, [ticketValue, profitMargin, closeRate, monthlyInbound, missedCallRate, staleLeads, reactivationEffort, receptionistSalary, timeSpentOnCalls]);
 
-  const SliderInput = ({ label, value, min, max, step, onChange, prefix = "", suffix = "" }: any) => {
-    // Calculate percentage for the dynamic track background fill
+  // Helper function to render working slider with gradient track
+  const renderSlider = (label: string, value: number, min: number, max: number, step: number, onChange: (value: number) => void, prefix = "", suffix = "") => {
     const percentage = ((value - min) / (max - min)) * 100;
-
     return (
-      <div className="space-y-4 group">
-        <div className="flex justify-between items-baseline">
-          <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">{label}</label>
-          <span className="font-mono text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+          <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em' }}>
+            {label}
+          </label>
+          <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold', color: 'white' }}>
             {prefix}{value.toLocaleString()}{suffix}
           </span>
         </div>
-        <div className="relative flex items-center h-6">
+        <div style={{ position: 'relative', height: '24px' }}>
+          <div 
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: 0,
+              transform: 'translateY(-50%)',
+              width: '100%',
+              height: '4px',
+              background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`,
+              borderRadius: '2px',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
           <input 
             type="range" 
             min={min} 
             max={max} 
             step={step} 
             value={value} 
-            // Use onInput for immediate feedback and ensure the browser isn't waiting for a full cycle
-            onInput={(e) => onChange(Number((e.target as HTMLInputElement).value))} 
-            onChange={() => {}} // Satisfy React's controlled input requirement
-            className="w-full relative z-10"
-            style={{
-                background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${percentage}%, rgba(255,255,255,0.1) ${percentage}%, rgba(255,255,255,0.1) 100%)`,
-                borderRadius: '2px',
-                height: '4px'
-            }}
+            onChange={(e) => onChange(Number(e.target.value))}
+            style={{ width: '100%', position: 'relative', zIndex: 1, background: 'transparent' }}
           />
         </div>
       </div>
@@ -110,43 +118,113 @@ const ROICalculator: React.FC = () => {
         <div className="flex-1 w-full space-y-8">
           
           {/* Card 1: Sales Dynamics */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative group" style={{ overflow: 'visible' }}>
+             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000 pointer-events-none">
                 <svg className="w-24 h-24 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
              </div>
+             
             <h4 className="text-[11px] font-black uppercase tracking-[0.5em] text-indigo-400 mb-14 flex items-center">
               <span className="w-2 h-2 rounded-full bg-indigo-500 mr-4 shadow-[0_0_15px_rgba(99,102,241,0.6)]" />
               Sales Dynamics
             </h4>
-            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12">
-              <SliderInput label="Avg. Sale Ticket" value={ticketValue} min={100} max={10000} step={1} onChange={setTicketValue} prefix="$" />
-              <SliderInput label="Closing Rate" value={closeRate} min={1} max={95} step={1} onChange={setCloseRate} suffix="%" />
+            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12" style={{ position: 'relative', zIndex: 1 }}>
+              {/* Working inline sliders with track styling */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em' }}>
+                    Avg. Sale Ticket
+                  </label>
+                  <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold', color: 'white' }}>
+                    ${ticketValue.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ position: 'relative', height: '24px' }}>
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: 0,
+                      transform: 'translateY(-50%)',
+                      width: '100%',
+                      height: '4px',
+                      background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((ticketValue - 100) / (10000 - 100)) * 100}%, rgba(255,255,255,0.1) ${((ticketValue - 100) / (10000 - 100)) * 100}%, rgba(255,255,255,0.1) 100%)`,
+                      borderRadius: '2px',
+                      pointerEvents: 'none',
+                      zIndex: 0,
+                    }}
+                  />
+                  <input 
+                    type="range" 
+                    min={100} 
+                    max={10000} 
+                    step={1} 
+                    value={ticketValue} 
+                    onChange={(e) => setTicketValue(Number(e.target.value))}
+                    style={{ width: '100%', position: 'relative', zIndex: 1, background: 'transparent' }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em' }}>
+                    Closing Rate
+                  </label>
+                  <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold', color: 'white' }}>
+                    {closeRate}%
+                  </span>
+                </div>
+                <div style={{ position: 'relative', height: '24px' }}>
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: 0,
+                      transform: 'translateY(-50%)',
+                      width: '100%',
+                      height: '4px',
+                      background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((closeRate - 1) / (95 - 1)) * 100}%, rgba(255,255,255,0.1) ${((closeRate - 1) / (95 - 1)) * 100}%, rgba(255,255,255,0.1) 100%)`,
+                      borderRadius: '2px',
+                      pointerEvents: 'none',
+                      zIndex: 0,
+                    }}
+                  />
+                  <input 
+                    type="range" 
+                    min={1} 
+                    max={95} 
+                    step={1} 
+                    value={closeRate} 
+                    onChange={(e) => setCloseRate(Number(e.target.value))}
+                    style={{ width: '100%', position: 'relative', zIndex: 1, background: 'transparent' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 2: Funnel Metrics */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative group" style={{ overflow: 'visible' }}>
             <h4 className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-400 mb-14 flex items-center">
               <span className="w-2 h-2 rounded-full bg-emerald-500 mr-4 shadow-[0_0_15px_rgba(16,185,129,0.6)]" />
               Funnel Metrics
             </h4>
-            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12">
-              <SliderInput label="Monthly Inbound" value={monthlyInbound} min={10} max={10000} step={1} onChange={setMonthlyInbound} />
-              <SliderInput label="Calls Missed" value={missedCallRate} min={1} max={95} step={1} onChange={setMissedCallRate} suffix="%" />
-              <SliderInput label="Stale Leads (CRM)" value={staleLeads} min={0} max={10000} step={1} onChange={setStaleLeads} suffix=" Leads" />
-              <SliderInput label="Reactivation Intensity" value={reactivationEffort} min={0} max={100} step={1} onChange={setReactivationEffort} suffix="%" />
+            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12" style={{ position: 'relative', zIndex: 1 }}>
+              {renderSlider("Monthly Inbound", monthlyInbound, 10, 10000, 1, setMonthlyInbound)}
+              {renderSlider("Calls Missed", missedCallRate, 1, 95, 1, setMissedCallRate, "", "%")}
+              {renderSlider("Stale Leads (CRM)", staleLeads, 0, 10000, 1, setStaleLeads, "", " Leads")}
+              {renderSlider("Reactivation Intensity", reactivationEffort, 0, 100, 1, setReactivationEffort, "", "%")}
             </div>
           </div>
 
           {/* Card 3: Overhead Reduction */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 shadow-2xl relative group" style={{ overflow: 'visible' }}>
             <h4 className="text-[11px] font-black uppercase tracking-[0.5em] text-orange-400 mb-14 flex items-center">
               <span className="w-2 h-2 rounded-full bg-orange-500 mr-4 shadow-[0_0_15px_rgba(249,115,22,0.6)]" />
               Overhead Reduction
             </h4>
-            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12">
-              <SliderInput label="Monthly Labor Cost" value={receptionistSalary} min={500} max={20000} step={1} onChange={setReceptionistSalary} prefix="$" />
-              <SliderInput label="Phone Time (Human)" value={timeSpentOnCalls} min={1} max={100} step={1} onChange={setTimeSpentOnCalls} suffix="%" />
+            <div className="grid md:grid-cols-2 gap-x-16 gap-y-12" style={{ position: 'relative', zIndex: 1 }}>
+              {renderSlider("Monthly Labor Cost", receptionistSalary, 500, 20000, 1, setReceptionistSalary, "$")}
+              {renderSlider("Phone Time (Human)", timeSpentOnCalls, 1, 100, 1, setTimeSpentOnCalls, "", "%")}
             </div>
           </div>
 
