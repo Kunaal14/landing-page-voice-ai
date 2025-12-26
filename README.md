@@ -25,8 +25,8 @@ A modern, high-performance landing page for Voice AI agents with interactive ROI
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Kunaal14/landing-page-voice-ai.git
-cd landing-page-voice-ai
+git clone https://github.com/Kunaal14/voice-ai.git
+cd voice-ai
 ```
 
 ### 2. Install Dependencies
