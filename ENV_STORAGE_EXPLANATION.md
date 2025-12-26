@@ -26,7 +26,7 @@
      ```
    - With the actual value:
      ```javascript
-     "AIzaSyBKGzRTcxgecDV_1Ur5mryXqx-vjo6bDfo"
+     "your-actual-api-key-here"
      ```
 
 4. **Built files in `dist/` contain hardcoded values**
